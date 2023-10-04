@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Digiteq test</string>
+    <string name="columns">Columns</string>
+    <string name="rows">Rows</string>
+    <string name="items">Items count</string>
+</resources>
