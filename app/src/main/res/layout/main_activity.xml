@@ -10,12 +10,12 @@
         android:layout_height="wrap_content"
         android:text="@string/columns" />
 
-    <EditText
+    <SeekBar
         android:id="@+id/columns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number"
-        android:labelFor="@+id/columns_label" />
+        android:max="10"
+        android:min="1" />
 
     <TextView
         android:id="@+id/rows_label"
@@ -23,12 +23,12 @@
         android:layout_height="wrap_content"
         android:text="@string/rows" />
 
-    <EditText
+    <SeekBar
         android:id="@+id/rows"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number"
-        android:labelFor="@+id/rows_label" />
+        android:max="10"
+        android:min="1" />
 
     <TextView
         android:id="@+id/items_label"
@@ -36,12 +36,18 @@
         android:layout_height="wrap_content"
         android:text="@string/items" />
 
-    <EditText
+    <SeekBar
         android:id="@+id/items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number"
-        android:labelFor="@+id/items_label" />
+        android:max="1000"
+        android:min="1" />
+
+    <Switch
+        android:id="@+id/rtl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/is_rtl" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
