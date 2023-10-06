@@ -49,6 +49,13 @@
         android:layout_height="wrap_content"
         android:text="@string/is_rtl" />
 
+    <Button
+        android:id="@+id/go_to_last"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/go_to_last"
+        />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"

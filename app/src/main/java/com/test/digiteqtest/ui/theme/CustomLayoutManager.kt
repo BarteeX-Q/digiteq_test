@@ -1,6 +1,10 @@
 package com.test.digiteqtest.ui.theme
 
+import android.content.Context
+import android.graphics.PointF
 import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.ceil
 import kotlin.math.min
@@ -10,7 +14,7 @@ class CustomLayoutManager(
     private var columns: Int,
     private var isRTL: Boolean = false,
 ) :
-    RecyclerView.LayoutManager() {
+    RecyclerView.LayoutManager(), RecyclerView.SmoothScroller.ScrollVectorProvider {
     private var offsetVertical = 0
     private var offsetHorizontal = 0
 
@@ -209,10 +213,27 @@ class CustomLayoutManager(
 
     override fun canScrollHorizontally(): Boolean = true
 
+    override fun smoothScrollToPosition(
+        recyclerView: RecyclerView?,
+        state: RecyclerView.State?,
+        position: Int
+    ) {
+        val smoothScroller = TopSnappedSmoothScroller(recyclerView!!.context)
+        smoothScroller.targetPosition = position
+        startSmoothScroll(smoothScroller)
+    }
+
+    override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
+        if (childCount == 0) {
+            return null
+        }
+        val firstChildPos = (getChildAt(targetPosition)!!)
+        return PointF(getLeftDecorationWidth(firstChildPos).toFloat(), getTopDecorationHeight(firstChildPos).toFloat())
+    }
+
     private fun getInnerRowsCount(): Int {
         val fullRowCount = rows * columns
         val innerRowsValue = itemCount / fullRowCount.toDouble()
-
         return ceil(innerRowsValue).toInt()
     }
 
@@ -226,5 +247,17 @@ class CustomLayoutManager(
         val innerColumnOffset = innerRowIndex * columns
 
         return rowIndexOffset + innerColumnOffset + columnIndex
+    }
+
+    private class TopSnappedSmoothScroller(context: Context) :
+        LinearSmoothScroller(context) {
+
+        override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
+            return (layoutManager as CustomLayoutManager).computeScrollVectorForPosition(targetPosition)
+        }
+
+        override fun getVerticalSnapPreference(): Int {
+            return SNAP_TO_START
+        }
     }
 }
