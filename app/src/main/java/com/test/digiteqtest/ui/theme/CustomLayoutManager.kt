@@ -1,5 +1,6 @@
 package com.test.digiteqtest.ui.theme
 
+import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.ceil
 import kotlin.math.min
@@ -17,12 +18,6 @@ class CustomLayoutManager(
         this.rows = rows
         this.columns = columns
         this.isRTL = isRTL
-    }
-
-    fun getInnerRowsCount(): Int {
-        val fullRowCount = rows * columns
-        val innerRowsValue = itemCount / fullRowCount.toDouble()
-        return ceil(innerRowsValue).toInt()
     }
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler?, state: RecyclerView.State?) {
@@ -43,10 +38,10 @@ class CustomLayoutManager(
 
         var biggestVerticalOffset = 0
         var biggestHorizontalOffset = 0
-        var totalHorizontalOffset = offsetHorizontal
+        var totalHorizontalOffset = 0
 
-        var offsetY = offsetVertical
-        var offsetX : Int
+        var offsetY = 0
+        var offsetX: Int
 
         var rangeRows: Iterable<Int> = 0 until rows
         val rangeInnerColumns: Iterable<Int> = 0 until innerRowsCount
@@ -60,35 +55,25 @@ class CustomLayoutManager(
             offsetX = totalHorizontalOffset
             for (innerRowIndex in rangeInnerColumns) {
                 for (columnIndex in rangeColumns) {
-                    val rowIndexOffset = rowIndex * columns * innerRowsCount
-                    val innerColumnOffset = innerRowIndex * columns
-                    val index = rowIndexOffset + innerColumnOffset + columnIndex
+                    val index = calculateCurrentIndex(rowIndex, innerRowIndex, columnIndex)
                     if (index >= itemCount) {
                         continue
                     }
 
                     val view = recycler.getViewForPosition(index)
-
                     measureChildWithMargins(view, 0, 0)
 
                     val viewWidth = getDecoratedMeasuredWidth(view)
                     val viewHeight = getDecoratedMeasuredHeight(view)
 
-                    val left = offsetX
-                    val top = offsetY
-                    val right = left + viewWidth
-                    val bottom = top + viewHeight
+                    renderItem(offsetX, offsetY, viewWidth, viewHeight, view, index)
 
-                    layoutDecorated(view, left, top, right, bottom)
-
-                    addView(view, index)
-
-                    if (viewHeight > biggestVerticalOffset) {
-                        biggestVerticalOffset = viewHeight
-                    }
                     offsetX += viewWidth
                     if (offsetX > biggestHorizontalOffset) {
                         biggestHorizontalOffset = offsetX
+                    }
+                    if (viewHeight > biggestVerticalOffset) {
+                        biggestVerticalOffset = viewHeight
                     }
                 }
                 offsetX = totalHorizontalOffset
@@ -97,8 +82,26 @@ class CustomLayoutManager(
             }
             totalHorizontalOffset = biggestHorizontalOffset
             biggestHorizontalOffset = 0
-            offsetY = offsetVertical
+            offsetY = 0
         }
+    }
+
+    private fun renderItem(
+        offsetX: Int,
+        offsetY: Int,
+        viewWidth: Int,
+        viewHeight: Int,
+        view: View,
+        index: Int
+    ) {
+        val left = offsetX + offsetHorizontal
+        val top = offsetY + offsetVertical
+        val right = left + viewWidth
+        val bottom = top + viewHeight
+
+        layoutDecorated(view, left, top, right, bottom)
+
+        addView(view, index)
     }
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
@@ -152,13 +155,24 @@ class CustomLayoutManager(
         state: RecyclerView.State?
     ): Int {
         val innerRowsCount = getInnerRowsCount()
-        var bottomViewIndex = innerRowsCount * columns * rows + columns - 1
-        if (bottomViewIndex >= itemCount - 1) {
-            bottomViewIndex = itemCount - 1
+        var mostRightViewIndex = innerRowsCount * columns * (rows - 1) + columns - 1
+        if (mostRightViewIndex >= itemCount - 1) {
+            mostRightViewIndex = itemCount - 1
         }
 
-        val leftView = getChildAt(0)
-        val rightView = getChildAt(bottomViewIndex)
+        val leftViewIndex = if (isRTL) {
+            mostRightViewIndex
+        } else {
+            0
+        }
+        val rightViewIndex = if (isRTL) {
+            0
+        } else {
+            mostRightViewIndex
+        }
+
+        val leftView = getChildAt(leftViewIndex)
+        val rightView = getChildAt(rightViewIndex)
 
         val decoratedRightView = getDecoratedRight(rightView!!)
         val decoratedLeftView = getDecoratedLeft(leftView!!)
@@ -167,7 +181,6 @@ class CustomLayoutManager(
         if (viewSpanWidth <= horizontalSpace) {
             return 0
         }
-
 
         val delta: Int = if (dx > 0) {
             val scrollEndPosition = horizontalSpace - decoratedLeftView
@@ -195,4 +208,23 @@ class CustomLayoutManager(
     override fun canScrollVertically(): Boolean = true
 
     override fun canScrollHorizontally(): Boolean = true
+
+    private fun getInnerRowsCount(): Int {
+        val fullRowCount = rows * columns
+        val innerRowsValue = itemCount / fullRowCount.toDouble()
+
+        return ceil(innerRowsValue).toInt()
+    }
+
+    private fun calculateCurrentIndex(
+        rowIndex: Int,
+        innerRowIndex: Int,
+        columnIndex: Int
+    ): Int {
+        val innerRowsCount = getInnerRowsCount()
+        val rowIndexOffset = rowIndex * columns * innerRowsCount
+        val innerColumnOffset = innerRowIndex * columns
+
+        return rowIndexOffset + innerColumnOffset + columnIndex
+    }
 }
